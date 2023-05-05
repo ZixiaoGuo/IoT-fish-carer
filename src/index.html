@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Temperature and TDS</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+
+<div id="chart"></div>
+
+<script>
+    let data = {
+        x: [],
+        yTemp: [],
+        yTDS: []
+    };
+
+    const traceTemp = {
+        x: data.x,
+        y: data.yTemp,
+        mode: 'lines',
+        name: 'Temperature',
+        yaxis: 'y1'  // Assign the trace to the first y-axis
+    };
+
+    const traceTDS = {
+        x: data.x,
+        y: data.yTDS,
+        mode: 'lines',
+        name: 'TDS',
+        yaxis: 'y2'  // Assign the trace to the second y-axis
+    };
+
+    const layout = {
+        title: 'Temperature and TDS',
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Temperature (°C)' },  // Update the title
+        yaxis2: {  // Add the second y-axis
+            title: 'TDS (ppm)',
+            overlaying: 'y',
+            side: 'right',
+            range: [0, 500]  // Set the range for the TDS y-axis
+        }
+    };
+
+    Plotly.newPlot('chart', [traceTemp, traceTDS], layout);
+
+    // Replace 'your-ec2-ip' with your EC2 instance's public IP address or domain name
+    const socket = io.connect('http://54.176.176.121:5000/graph');
+
+    socket.on('new_data', function (msg) {
+        const currentTime = new Date();
+        data.x.push(currentTime);
+        data.yTemp.push(parseFloat(msg.temp));
+        data.yTDS.push(parseFloat(msg.tds));
+
+        Plotly.update('chart', {x: [data.x], y: [data.yTemp, data.yTDS]});
+    });
+</script>
+
+
+</body>
+</html>
